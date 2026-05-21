@@ -7,83 +7,34 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
-        
         body { font-family: 'Inter', system_ui, sans-serif; background-color: #0a0a0a; color: #e5e5e5; }
-        .font-display { font-family: 'Space Grotesk', system_ui, sans-serif; }
-
-        .post-card {
-            background-color: #111111;
-            border: 1px solid #27272a;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .post-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-        }
-
-        /* Intro Animation */
-        .intro-screen {
-            animation: fadeOut 0.6s ease forwards;
-            animation-delay: 3.2s;
-        }
-        
-        .letter {
-            display: inline-block;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: letterIn 0.6s forwards;
-        }
-        
-        @keyframes letterIn {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .logo-text {
-            font-size: 5.5rem;
-            font-weight: 700;
-            letter-spacing: -0.05em;
-            line-height: 1;
-        }
+        .post-card { transition: all 0.2s ease; }
+        .post-card:hover { transform: translateY(-2px); }
     </style>
 </head>
 <body>
-    <!-- INTRO SCREEN (Profissional com animação) -->
+    <!-- Intro Animation -->
     <div id="intro-screen" class="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center z-[300]">
         <div class="text-center">
-            <!-- Logo sntx -->
-            <div class="mb-4">
+            <div class="mb-3">
                 <span class="font-display text-[5.5rem] font-bold tracking-[-4px] text-white">sntx</span>
             </div>
-            
-            <!-- Animação de letras entrando uma dentro da outra -->
-            <div id="animated-text" class="font-display text-4xl font-semibold tracking-[-2px] text-zinc-400">
-                <!-- Letras serão inseridas via JS -->
-            </div>
+            <div id="animated-text" class="font-display text-4xl font-semibold tracking-[-2px] text-zinc-400"></div>
         </div>
     </div>
 
     <!-- Main App -->
     <div id="main-app" class="hidden">
-        <!-- Navbar Minimal -->
         <nav class="bg-zinc-950 border-b border-zinc-800 sticky top-0 z-50">
             <div class="max-w-screen-2xl mx-auto px-6 flex items-center justify-between h-16">
                 <div class="flex items-center gap-x-3">
-                    <div class="w-8 h-8 bg-white rounded-xl flex items-center justify-center">
-                        <span class="font-bold text-black text-xl">s</span>
-                    </div>
+                    <div class="w-8 h-8 bg-white rounded-xl flex items-center justify-center"><span class="font-bold text-black">s</span></div>
                     <span class="font-semibold text-xl tracking-tight">sntx fórum</span>
                 </div>
-
                 <div class="flex items-center gap-x-3">
                     <div id="user-area"></div>
-                    <button onclick="showNewPostModal()" 
-                            class="bg-white hover:bg-zinc-100 transition-colors text-black px-5 h-10 rounded-2xl text-sm font-semibold flex items-center gap-x-2">
-                        <i class="fa-solid fa-plus text-sm"></i>
-                        <span>Publicar</span>
+                    <button onclick="showNewPostModal()" class="bg-white text-black px-5 h-10 rounded-2xl text-sm font-semibold flex items-center gap-x-2">
+                        <i class="fa-solid fa-plus"></i> <span>Publicar</span>
                     </button>
                 </div>
             </div>
@@ -92,55 +43,54 @@
         <div class="max-w-screen-2xl mx-auto px-6 pt-10">
             <div class="max-w-2xl mb-8">
                 <h1 class="text-5xl font-semibold tracking-tighter">sntx fórum</h1>
-                <p class="text-zinc-400 mt-2 text-lg">Um espaço limpo para compartilhar métodos que funcionam.</p>
+                <p class="text-zinc-400 mt-2">Um espaço limpo para compartilhar métodos que funcionam.</p>
+            </div>
+
+            <div class="flex justify-end mb-4">
+                <button onclick="toggleAdmin()" class="text-xs px-4 py-1.5 border border-zinc-700 rounded-2xl hover:bg-zinc-900">Ativar Modo Admin</button>
             </div>
 
             <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
     </div>
 
-    <!-- Modals (mantidos funcionais) -->
     <div id="new-post-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[200]">
         <div class="bg-zinc-900 border border-zinc-700 w-full max-w-md rounded-3xl p-7">
             <h3 class="text-2xl font-semibold mb-6">Nova publicação</h3>
-            <input id="new-title" type="text" placeholder="Título" class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 mb-4 text-sm">
-            <textarea id="new-content" placeholder="Descreva seu método..." class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 h-28 mb-5 text-sm"></textarea>
+            <input id="new-title" type="text" placeholder="Título" class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 mb-4">
+            <textarea id="new-content" placeholder="Descreva o método..." class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 h-28 mb-5"></textarea>
             <div class="flex justify-end gap-x-3">
-                <button onclick="hideNewPostModal()" class="px-6 py-2 text-sm text-zinc-400">Cancelar</button>
-                <button onclick="createNewPost()" class="bg-white text-black px-7 py-2 rounded-2xl font-semibold text-sm">Publicar</button>
+                <button onclick="hideNewPostModal()" class="px-6 py-2 text-sm">Cancelar</button>
+                <button onclick="createNewPost()" class="bg-white text-black px-7 py-2 rounded-2xl font-semibold">Publicar</button>
             </div>
         </div>
     </div>
 
     <script>
-        // ==================== INTRO ANIMATION ====================
         function startIntroAnimation() {
-            const textContainer = document.getElementById('animated-text');
+            const container = document.getElementById('animated-text');
             const text = "fórum";
-            textContainer.innerHTML = '';
-
-            text.split('').forEach((letter, index) => {
+            container.innerHTML = '';
+            text.split('').forEach((char, i) => {
                 const span = document.createElement('span');
-                span.className = 'letter';
-                span.style.animationDelay = `${0.8 + (index * 0.12)}s`;
-                span.textContent = letter;
-                textContainer.appendChild(span);
+                span.className = 'inline-block opacity-0 translate-y-5';
+                span.style.transition = `all 0.5s ease ${0.7 + i * 0.1}s`;
+                span.textContent = char;
+                container.appendChild(span);
+                setTimeout(() => { span.style.opacity = '1'; span.style.transform = 'translateY(0)'; }, 50);
             });
 
-            // Depois de 3.5 segundos some a tela de intro
             setTimeout(() => {
                 const intro = document.getElementById('intro-screen');
-                intro.style.transition = 'opacity 0.6s ease';
+                intro.style.transition = 'opacity 0.5s ease';
                 intro.style.opacity = '0';
-                
                 setTimeout(() => {
                     intro.style.display = 'none';
                     document.getElementById('main-app').classList.remove('hidden');
-                }, 600);
-            }, 3400);
+                }, 500);
+            }, 3200);
         }
 
-        // ==================== CORE FUNCTIONALITY ====================
         let posts = JSON.parse(localStorage.getItem('sntxPosts') || '[]');
         let currentUser = JSON.parse(localStorage.getItem('sntxUser') || 'null');
         let isAdmin = false;
@@ -157,14 +107,7 @@
             if (!currentUser) {
                 el.innerHTML = `<button onclick="login()" class="px-5 py-2 border border-zinc-700 rounded-2xl text-sm">Entrar</button>`;
             } else {
-                el.innerHTML = `
-                    <div class="flex items-center gap-x-3">
-                        <div onclick="editProfile()" class="flex items-center gap-x-2 cursor-pointer">
-                            <img src="${currentUser.avatar}" class="w-8 h-8 rounded-full object-cover border border-zinc-700">
-                            <span class="text-sm">@${currentUser.nickname}</span>
-                        </div>
-                        <button onclick="logout()" class="text-xs text-zinc-500">sair</button>
-                    </div>`;
+                el.innerHTML = `<div class="flex items-center gap-x-3"><div onclick="editProfile()" class="flex items-center gap-x-2 cursor-pointer"><img src="${currentUser.avatar}" class="w-8 h-8 rounded-full object-cover border border-zinc-700"><span>@${currentUser.nickname}</span></div><button onclick="logout()" class="text-xs text-zinc-500">sair</button></div>`;
             }
         }
 
@@ -178,65 +121,47 @@
         }
 
         function logout() {
-            currentUser = null;
-            localStorage.removeItem('sntxUser');
-            renderUserArea();
-            renderPosts();
+            currentUser = null; localStorage.removeItem('sntxUser'); renderUserArea(); renderPosts();
         }
 
         function editProfile() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
+            const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
             input.onchange = e => {
-                const file = e.target.files[0];
-                if (!file) return;
                 const reader = new FileReader();
-                reader.onload = ev => {
-                    currentUser.avatar = ev.target.result;
-                    saveAll();
-                    renderUserArea();
-                    renderPosts();
-                };
-                reader.readAsDataURL(file);
+                reader.onload = ev => { currentUser.avatar = ev.target.result; saveAll(); renderUserArea(); renderPosts(); };
+                reader.readAsDataURL(e.target.files[0]);
             };
             input.click();
+        }
+
+        function toggleAdmin() {
+            isAdmin = !isAdmin;
+            alert(isAdmin ? 'Modo Admin ativado' : 'Modo Admin desativado');
+            renderPosts();
         }
 
         function renderPosts() {
             const container = document.getElementById('posts-container');
             container.innerHTML = '';
-
             posts.forEach(post => {
                 if (bannedUsers.includes(post.author)) return;
-
                 const canDelete = currentUser && (post.author === currentUser.nickname || isAdmin);
-
                 const card = document.createElement('div');
-                card.className = 'post-card rounded-3xl p-6 cursor-pointer';
+                card.className = 'post-card bg-zinc-900 border border-zinc-800 rounded-3xl p-6 cursor-pointer';
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="text-xs px-3 py-1 bg-zinc-800 rounded-full text-zinc-400">${post.category || 'Geral'}</span>
-                        ${canDelete ? `<button onclick="deletePost(${post.id}, event)" class="text-red-400 text-xs hover:text-red-500">Apagar</button>` : ''}
+                    <div class="flex justify-between mb-4">
+                        <span class="text-xs px-3 py-1 bg-zinc-800 rounded-full">${post.category || 'Geral'}</span>
+                        ${canDelete ? `<button onclick="deletePost(${post.id}, event)" class="text-red-400 text-xs">Apagar</button>` : ''}
                     </div>
-                    <h3 class="font-semibold text-xl leading-tight mb-3">${post.title}</h3>
-                    <p class="text-sm text-zinc-400 line-clamp-3 mb-5">${post.content}</p>
-                    
-                    <div class="flex items-center justify-between text-sm">
-                        <div class="flex items-center gap-x-2">
-                            <img src="${post.avatar}" class="w-6 h-6 rounded-full">
-                            <span class="text-zinc-400">@${post.author}</span>
-                        </div>
+                    <h3 class="font-semibold text-xl mb-2">${post.title}</h3>
+                    <p class="text-sm text-zinc-400 line-clamp-3">${post.content}</p>
+                    <div class="flex justify-between mt-5 text-sm">
+                        <div class="flex items-center gap-x-2"><img src="${post.avatar}" class="w-6 h-6 rounded-full"><span class="text-zinc-400">@${post.author}</span></div>
                         <div class="flex gap-x-4 text-zinc-400">
-                            <button onclick="likePost(${post.id}, event)" class="flex items-center gap-x-1 hover:text-white">
-                                <i class="fa-solid fa-heart"></i> <span>${post.likes || 0}</span>
-                            </button>
-                            <button onclick="commentOnPost(${post.id}, event)" class="flex items-center gap-x-1 hover:text-white">
-                                <i class="fa-regular fa-comment"></i>
-                            </button>
+                            <button onclick="likePost(${post.id}, event)"><i class="fa-solid fa-heart"></i> ${post.likes || 0}</button>
+                            <button onclick="commentOnPost(${post.id}, event)"><i class="fa-regular fa-comment"></i></button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
                 container.appendChild(card);
             });
         }
@@ -246,85 +171,26 @@
             const title = document.getElementById('new-title').value.trim();
             const content = document.getElementById('new-content').value.trim();
             if (!title) return;
-
-            posts.unshift({
-                id: Date.now(), title, content,
-                author: currentUser.nickname,
-                avatar: currentUser.avatar,
-                category: 'Geral',
-                likes: 0, comments: []
-            });
-            saveAll();
-            hideNewPostModal();
-            renderPosts();
+            posts.unshift({ id: Date.now(), title, content, author: currentUser.nickname, avatar: currentUser.avatar, likes: 0, comments: [] });
+            saveAll(); hideNewPostModal(); renderPosts();
         }
 
-        function deletePost(id, e) {
-            e.stopImmediatePropagation();
-            if (!confirm('Apagar esta publicação?')) return;
-            posts = posts.filter(p => p.id !== id);
-            saveAll();
-            renderPosts();
-        }
+        function deletePost(id, e) { e.stopImmediatePropagation(); if (!confirm('Apagar post?')) return; posts = posts.filter(p => p.id !== id); saveAll(); renderPosts(); }
+        function likePost(id, e) { e.stopImmediatePropagation(); const p = posts.find(x => x.id === id); if (p) { p.likes = (p.likes||0)+1; saveAll(); renderPosts(); } }
+        function commentOnPost(id, e) { e.stopImmediatePropagation(); if (!currentUser) return alert('Login necessário'); const t = prompt('Comentário:'); if (!t) return; const p = posts.find(x => x.id === id); if (p) { p.comments = p.comments || []; p.comments.push({author: currentUser.nickname, text: t}); saveAll(); renderPosts(); } }
 
-        function likePost(id, e) {
-            e.stopImmediatePropagation();
-            const post = posts.find(p => p.id === id);
-            if (post) {
-                post.likes = (post.likes || 0) + 1;
-                saveAll();
-                renderPosts();
-            }
-        }
-
-        function commentOnPost(id, e) {
-            e.stopImmediatePropagation();
-            if (!currentUser) return alert('Faça login para comentar');
-            const text = prompt('Comentário:');
-            if (!text) return;
-            const post = posts.find(p => p.id === id);
-            if (post) {
-                post.comments = post.comments || [];
-                post.comments.push({ author: currentUser.nickname, text });
-                saveAll();
-                renderPosts();
-            }
-        }
-
-        function showNewPostModal() {
-            if (!currentUser) return alert('Faça login primeiro');
-            document.getElementById('new-post-modal').classList.remove('hidden');
-            document.getElementById('new-post-modal').classList.add('flex');
-        }
-
-        function hideNewPostModal() {
-            document.getElementById('new-post-modal').classList.remove('flex');
-            document.getElementById('new-post-modal').classList.add('hidden');
-        }
+        function showNewPostModal() { if (!currentUser) return alert('Faça login'); document.getElementById('new-post-modal').classList.remove('hidden'); document.getElementById('new-post-modal').classList.add('flex'); }
+        function hideNewPostModal() { document.getElementById('new-post-modal').classList.remove('flex'); document.getElementById('new-post-modal').classList.add('hidden'); }
 
         function initialize() {
-            // Inicia a animação da intro
             startIntroAnimation();
-
             renderUserArea();
             renderPosts();
-
-            // Post demo se vazio
             if (posts.length === 0) {
-                posts = [{
-                    id: 1,
-                    title: "Método simples de foco profundo",
-                    content: "Trabalhe 50 minutos sem distrações e depois descanse 10 minutos.",
-                    author: "sntx",
-                    avatar: "https://i.pravatar.cc/128?img=47",
-                    likes: 24,
-                    comments: []
-                }];
-                saveAll();
-                renderPosts();
+                posts.push({id:1, title:"Bem-vindo ao sntx fórum", content:"Design mais limpo e profissional. Use o botão Modo Admin para gerenciar posts.", author:"sntx", avatar:"https://i.pravatar.cc/128?img=47", likes:15, comments:[]});
+                saveAll(); renderPosts();
             }
         }
-
         window.onload = initialize;
     </script>
 </body>
