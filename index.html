@@ -6,6 +6,9 @@
     <title>sntx fórum</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- NSFWJS + TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nsfwjs@2.4.2/dist/nsfwjs.min.js"></script>
     <style>
         body { font-family: 'Inter', system_ui, sans-serif; background-color: #0a0a0a; color: #e5e5e5; }
         .post-card { transition: all 0.3s ease; }
@@ -47,18 +50,16 @@
         </div>
     </div>
 
-    <!-- New Post Modal with Image Upload -->
+    <!-- New Post Modal -->
     <div id="new-post-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[200] p-4">
         <div class="bg-zinc-900 border border-zinc-700 w-full max-w-lg rounded-3xl p-8">
             <h3 class="text-2xl font-semibold mb-7">Nova publicação</h3>
-            
             <input id="new-title" type="text" placeholder="Título" class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 mb-4">
             <textarea id="new-content" placeholder="Descreva o método..." class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 h-28 mb-5"></textarea>
 
-            <!-- Image Upload -->
             <div class="mb-6">
                 <label class="text-xs tracking-wider text-zinc-500 block mb-2">ADICIONAR FOTO (OPCIONAL)</label>
-                <input type="file" id="post-image" accept="image/*" class="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-2xl file:border-0 file:text-sm file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700">
+                <input type="file" id="post-image" accept="image/*" class="text-sm">
                 <div id="image-preview" class="mt-3 hidden">
                     <img id="preview-img" class="max-h-48 rounded-2xl object-cover w-full">
                 </div>
@@ -71,7 +72,7 @@
         </div>
     </div>
 
-    <!-- Profile Modal (mais elaborado) -->
+    <!-- Profile Modal -->
     <div id="profile-modal" onclick="if (event.target.id === 'profile-modal') hideProfileModal()" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[200] p-4">
         <div onclick="event.stopImmediatePropagation()" class="bg-zinc-900 border border-zinc-700 w-full max-w-3xl rounded-3xl p-9">
             <div class="flex items-center gap-x-6 mb-8">
@@ -81,10 +82,8 @@
                     <div id="profile-count" class="text-zinc-400 mt-1 text-lg"></div>
                 </div>
             </div>
-
             <h4 class="font-semibold mb-5 text-xl">Publicações deste usuário</h4>
             <div id="profile-posts-list" class="space-y-4 max-h-[500px] overflow-auto"></div>
-
             <div class="mt-8 text-right">
                 <button onclick="hideProfileModal()" class="px-6 py-2 text-sm text-zinc-400 hover:text-white">Fechar perfil</button>
             </div>
@@ -92,7 +91,37 @@
     </div>
 
     <script>
-        // Admin password hash (746507)
+        // ==================== NSFW DETECTION ====================
+        let nsfwModel = null;
+
+        async function loadNSFWModel() {
+            if (!nsfwModel) {
+                nsfwModel = await nsfwjs.load();
+            }
+            return nsfwModel;
+        }
+
+        async function isNSFW(imageElement) {
+            try {
+                const model = await loadNSFWModel();
+                const predictions = await model.classify(imageElement);
+                
+                // Classes: Drawing, Hentai, Neutral, Porn, Sexy
+                const nsfwClasses = ['Porn', 'Hentai', 'Sexy'];
+                
+                for (let pred of predictions) {
+                    if (nsfwClasses.includes(pred.className) && pred.probability > 0.65) {
+                        return true;
+                    }
+                }
+                return false;
+            } catch (error) {
+                console.error('NSFW detection error:', error);
+                return false; // Fail safe - allow post if detection fails
+            }
+        }
+
+        // ==================== ADMIN ====================
         const ADMIN_PASSWORD_HASH = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
 
         async function hashString(str) {
@@ -102,11 +131,21 @@
         }
 
         async function toggleAdmin() {
-            if (isAdmin) { isAdmin = false; alert("Modo Admin desativado"); renderPosts(); return; }
+            if (isAdmin) {
+                isAdmin = false;
+                alert("Modo Admin desativado");
+                renderPosts();
+                return;
+            }
             const p = prompt("Digite a senha de admin:");
             if (!p) return;
-            if (await hashString(p) === ADMIN_PASSWORD_HASH) { isAdmin = true; alert("Modo Admin ativado"); renderPosts(); }
-            else alert("Senha incorreta");
+            if (await hashString(p) === ADMIN_PASSWORD_HASH) {
+                isAdmin = true;
+                alert("Modo Admin ativado");
+                renderPosts();
+            } else {
+                alert("Senha incorreta");
+            }
         }
 
         let posts = JSON.parse(localStorage.getItem("sntxPosts") || "[]");
@@ -131,37 +170,45 @@
             const nick = prompt("Seu apelido:");
             if (!nick) return;
             currentUser = { nickname: nick, avatar: "https://i.pravatar.cc/128?img=47" };
-            saveAll(); renderUserArea(); renderPosts();
+            saveAll();
+            renderUserArea();
+            renderPosts();
         }
 
-        function logout() { currentUser = null; localStorage.removeItem("sntxUser"); renderUserArea(); renderPosts(); }
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem("sntxUser");
+            renderUserArea();
+            renderPosts();
+        }
 
         function editProfile() {
             const inp = document.createElement("input");
-            inp.type = "file"; inp.accept = "image/*";
+            inp.type = "file";
+            inp.accept = "image/*";
             inp.onchange = e => {
                 const r = new FileReader();
-                r.onload = ev => { currentUser.avatar = ev.target.result; saveAll(); renderUserArea(); renderPosts(); };
+                r.onload = ev => {
+                    currentUser.avatar = ev.target.result;
+                    saveAll();
+                    renderUserArea();
+                    renderPosts();
+                };
                 r.readAsDataURL(e.target.files[0]);
             };
             inp.click();
         }
 
-        // Render posts with images
         function renderPosts() {
             const container = document.getElementById("posts-container");
             container.innerHTML = "";
 
             posts.forEach(post => {
                 const canDelete = currentUser && (post.author === currentUser.nickname || isAdmin);
-
                 const card = document.createElement("div");
                 card.className = "post-card bg-zinc-900 border border-zinc-800 rounded-3xl p-7 cursor-pointer";
                 
-                let imageHTML = "";
-                if (post.image) {
-                    imageHTML = `<img src="${post.image}" class="w-full rounded-2xl mb-5 max-h-80 object-cover">`;
-                }
+                let imageHTML = post.image ? `<img src="${post.image}" class="w-full rounded-2xl mb-5 max-h-80 object-cover">` : "";
 
                 card.innerHTML = `
                     <div class="flex justify-between mb-5">
@@ -187,7 +234,6 @@
             });
         }
 
-        // Profile (mais elaborado)
         function showUserProfile(username, e) {
             if (e) e.stopImmediatePropagation();
             const userPosts = posts.filter(p => p.author === username);
@@ -204,11 +250,7 @@
                 let img = post.image ? `<img src="${post.image}" class="w-full rounded-2xl mb-3 max-h-64 object-cover">` : "";
                 const d = document.createElement("div");
                 d.className = "bg-zinc-800 border border-zinc-700 p-6 rounded-2xl";
-                d.innerHTML = `
-                    ${img}
-                    <h4 class="font-semibold text-xl mb-2">${post.title}</h4>
-                    <p class="text-sm text-zinc-400">${post.content}</p>
-                `;
+                d.innerHTML = `${img}<h4 class="font-semibold text-xl mb-2">${post.title}</h4><p class="text-sm text-zinc-400">${post.content}</p>`;
                 list.appendChild(d);
             });
 
@@ -221,46 +263,65 @@
             document.getElementById("profile-modal").classList.add("hidden");
         }
 
-        // Create post with image
-        function createNewPost() {
+        // Create post with NSFW check
+        async function createNewPost() {
             if (!currentUser) return alert("Faça login primeiro");
+
             const title = document.getElementById("new-title").value.trim();
             const content = document.getElementById("new-content").value.trim();
-            if (!title) return;
+            if (!title) return alert("Título é obrigatório");
 
             const imageInput = document.getElementById("post-image");
-            let imageBase64 = null;
-
+            
             if (imageInput.files.length > 0) {
+                const file = imageInput.files[0];
+                const img = new Image();
+                
                 const reader = new FileReader();
-                reader.onload = function(ev) {
-                    imageBase64 = ev.target.result;
-                    savePostWithImage(title, content, imageBase64);
+                reader.onload = async function(e) {
+                    img.src = e.target.result;
+                    
+                    img.onload = async function() {
+                        // Check for NSFW
+                        const isBad = await isNSFW(img);
+                        
+                        if (isBad) {
+                            alert("Conteúdo impróprio detectado. Esta publicação foi bloqueada.");
+                            return;
+                        }
+                        
+                        // Save post with image
+                        posts.unshift({
+                            id: Date.now(),
+                            title,
+                            content,
+                            author: currentUser.nickname,
+                            avatar: currentUser.avatar,
+                            image: e.target.result,
+                            likes: 0
+                        });
+                        saveAll();
+                        hideNewPostModal();
+                        renderPosts();
+                        imageInput.value = "";
+                        document.getElementById("preview-img").classList.add("hidden");
+                    };
                 };
-                reader.readAsDataURL(imageInput.files[0]);
-                return;
+                reader.readAsDataURL(file);
+            } else {
+                // Post without image
+                posts.unshift({
+                    id: Date.now(),
+                    title,
+                    content,
+                    author: currentUser.nickname,
+                    avatar: currentUser.avatar,
+                    likes: 0
+                });
+                saveAll();
+                hideNewPostModal();
+                renderPosts();
             }
-
-            savePostWithImage(title, content, null);
-        }
-
-        function savePostWithImage(title, content, image) {
-            posts.unshift({
-                id: Date.now(),
-                title,
-                content,
-                author: currentUser.nickname,
-                avatar: currentUser.avatar,
-                image: image,
-                likes: 0
-            });
-            saveAll();
-            hideNewPostModal();
-            renderPosts();
-
-            // Clear image input
-            document.getElementById("post-image").value = "";
-            document.getElementById("preview-img").classList.add("hidden");
         }
 
         function deletePost(id, e) {
@@ -274,7 +335,11 @@
         function likePost(id, e) {
             e.stopImmediatePropagation();
             const p = posts.find(x => x.id === id);
-            if (p) { p.likes = (p.likes || 0) + 1; saveAll(); renderPosts(); }
+            if (p) {
+                p.likes = (p.likes || 0) + 1;
+                saveAll();
+                renderPosts();
+            }
         }
 
         function commentOnPost(id, e) {
@@ -296,7 +361,7 @@
             document.getElementById("new-post-modal").classList.remove("hidden");
             document.getElementById("new-post-modal").classList.add("flex");
 
-            // Preview da imagem
+            // Image preview
             const imageInput = document.getElementById("post-image");
             const preview = document.getElementById("preview-img");
             const previewContainer = document.getElementById("image-preview");
@@ -344,6 +409,11 @@
 
             renderUserArea();
             renderPosts();
+
+            // Preload NSFW model in background
+            setTimeout(() => {
+                loadNSFWModel().catch(() => {});
+            }, 5000);
         }
 
         window.onload = initialize;
