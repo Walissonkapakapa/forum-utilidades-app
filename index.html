@@ -6,13 +6,13 @@
     <title>sntx fórum</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- NSFWJS + TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/nsfwjs@2.4.2/dist/nsfwjs.min.js"></script>
     <style>
         body { font-family: 'Inter', system_ui, sans-serif; background-color: #0a0a0a; color: #e5e5e5; }
         .post-card { transition: all 0.3s ease; }
         .post-card:hover { transform: translateY(-3px); }
+        .profile-page { animation: slideIn 0.3s ease forwards; }
     </style>
 </head>
 <body>
@@ -72,85 +72,74 @@
         </div>
     </div>
 
-    <!-- Profile Modal -->
-    <div id="profile-modal" onclick="if (event.target.id === 'profile-modal') hideProfileModal()" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[200] p-4">
-        <div onclick="event.stopImmediatePropagation()" class="bg-zinc-900 border border-zinc-700 w-full max-w-3xl rounded-3xl p-9">
-            <div class="flex items-center gap-x-6 mb-8">
-                <img id="profile-avatar" class="w-24 h-24 rounded-2xl object-cover border border-zinc-700">
-                <div>
-                    <div id="profile-nickname" class="text-4xl font-semibold"></div>
-                    <div id="profile-count" class="text-zinc-400 mt-1 text-lg"></div>
-                </div>
+    <!-- Comments Modal -->
+    <div id="comments-modal" onclick="if (event.target.id === 'comments-modal') hideCommentsModal()" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[200] p-4">
+        <div onclick="event.stopImmediatePropagation()" class="bg-zinc-900 border border-zinc-700 w-full max-w-lg rounded-3xl p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold">Comentários</h3>
+                <button onclick="hideCommentsModal()" class="text-zinc-400 hover:text-white"><i class="fa-solid fa-times text-xl"></i></button>
             </div>
-            <h4 class="font-semibold mb-5 text-xl">Publicações deste usuário</h4>
-            <div id="profile-posts-list" class="space-y-4 max-h-[500px] overflow-auto"></div>
-            <div class="mt-8 text-right">
-                <button onclick="hideProfileModal()" class="px-6 py-2 text-sm text-zinc-400 hover:text-white">Fechar perfil</button>
+            <div id="comments-list" class="space-y-4 max-h-80 overflow-auto mb-6"></div>
+            <div class="flex gap-x-3">
+                <input id="comment-input" type="text" placeholder="Escreva um comentário..." class="flex-1 bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 text-sm">
+                <button onclick="addCommentFromModal()" class="bg-white text-black px-6 rounded-2xl font-semibold">Enviar</button>
             </div>
         </div>
     </div>
 
+    <!-- Profile (mais imersivo) -->
+    <div id="profile-modal" onclick="if (event.target.id === 'profile-modal') hideProfileModal()" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[200] p-4">
+        <div onclick="event.stopImmediatePropagation()" class="bg-zinc-900 border border-zinc-700 w-full max-w-4xl rounded-3xl p-9 profile-page">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-x-6">
+                    <img id="profile-avatar" class="w-24 h-24 rounded-2xl object-cover border border-zinc-700">
+                    <div>
+                        <div id="profile-nickname" class="text-4xl font-semibold"></div>
+                        <div id="profile-count" class="text-zinc-400 mt-1 text-lg"></div>
+                    </div>
+                </div>
+                <button onclick="hideProfileModal()" class="px-5 py-2 text-sm border border-zinc-700 rounded-2xl hover:bg-zinc-800">Voltar para o feed</button>
+            </div>
+
+            <h4 class="font-semibold mb-6 text-xl">Publicações</h4>
+            <div id="profile-posts-list" class="space-y-4 max-h-[520px] overflow-auto"></div>
+        </div>
+    </div>
+
     <script>
-        // ==================== NSFW DETECTION ====================
+        // NSFW + Admin
         let nsfwModel = null;
+        const ADMIN_PASSWORD_HASH = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
 
         async function loadNSFWModel() {
-            if (!nsfwModel) {
-                nsfwModel = await nsfwjs.load();
-            }
+            if (!nsfwModel) nsfwModel = await nsfwjs.load();
             return nsfwModel;
         }
 
-        async function isNSFW(imageElement) {
+        async function isNSFW(img) {
             try {
                 const model = await loadNSFWModel();
-                const predictions = await model.classify(imageElement);
-                
-                // Classes: Drawing, Hentai, Neutral, Porn, Sexy
-                const nsfwClasses = ['Porn', 'Hentai', 'Sexy'];
-                
-                for (let pred of predictions) {
-                    if (nsfwClasses.includes(pred.className) && pred.probability > 0.65) {
-                        return true;
-                    }
-                }
-                return false;
-            } catch (error) {
-                console.error('NSFW detection error:', error);
-                return false; // Fail safe - allow post if detection fails
-            }
+                const preds = await model.classify(img);
+                return preds.some(p => ['Porn','Hentai','Sexy'].includes(p.className) && p.probability > 0.65);
+            } catch(e) { return false; }
         }
 
-        // ==================== ADMIN ====================
-        const ADMIN_PASSWORD_HASH = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
-
         async function hashString(str) {
-            const enc = new TextEncoder();
-            const buf = await crypto.subtle.digest("SHA-256", enc.encode(str));
-            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+            const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
         }
 
         async function toggleAdmin() {
-            if (isAdmin) {
-                isAdmin = false;
-                alert("Modo Admin desativado");
-                renderPosts();
-                return;
-            }
-            const p = prompt("Digite a senha de admin:");
-            if (!p) return;
-            if (await hashString(p) === ADMIN_PASSWORD_HASH) {
-                isAdmin = true;
-                alert("Modo Admin ativado");
-                renderPosts();
-            } else {
-                alert("Senha incorreta");
-            }
+            if (isAdmin) { isAdmin = false; alert("Modo Admin desativado"); renderPosts(); return; }
+            const p = prompt("Senha de admin:");
+            if (p && await hashString(p) === ADMIN_PASSWORD_HASH) { isAdmin = true; alert("Modo Admin ativado"); renderPosts(); }
+            else alert("Senha incorreta");
         }
 
         let posts = JSON.parse(localStorage.getItem("sntxPosts") || "[]");
         let currentUser = JSON.parse(localStorage.getItem("sntxUser") || "null");
         let isAdmin = false;
+        let currentPostForComment = null;
 
         function saveAll() {
             localStorage.setItem("sntxPosts", JSON.stringify(posts));
@@ -170,30 +159,17 @@
             const nick = prompt("Seu apelido:");
             if (!nick) return;
             currentUser = { nickname: nick, avatar: "https://i.pravatar.cc/128?img=47" };
-            saveAll();
-            renderUserArea();
-            renderPosts();
+            saveAll(); renderUserArea(); renderPosts();
         }
 
-        function logout() {
-            currentUser = null;
-            localStorage.removeItem("sntxUser");
-            renderUserArea();
-            renderPosts();
-        }
+        function logout() { currentUser = null; localStorage.removeItem("sntxUser"); renderUserArea(); renderPosts(); }
 
         function editProfile() {
             const inp = document.createElement("input");
-            inp.type = "file";
-            inp.accept = "image/*";
+            inp.type = "file"; inp.accept = "image/*";
             inp.onchange = e => {
                 const r = new FileReader();
-                r.onload = ev => {
-                    currentUser.avatar = ev.target.result;
-                    saveAll();
-                    renderUserArea();
-                    renderPosts();
-                };
+                r.onload = ev => { currentUser.avatar = ev.target.result; saveAll(); renderUserArea(); renderPosts(); };
                 r.readAsDataURL(e.target.files[0]);
             };
             inp.click();
@@ -226,7 +202,7 @@
                         </div>
                         <div class="flex gap-x-5 text-sm text-zinc-400">
                             <button onclick="likePost(${post.id}, event)"><i class="fa-solid fa-heart"></i> ${post.likes || 0}</button>
-                            <button onclick="commentOnPost(${post.id}, event)"><i class="fa-regular fa-comment"></i></button>
+                            <button onclick="showComments(${post.id}, event)"><i class="fa-regular fa-comment"></i> ${(post.comments || []).length}</button>
                         </div>
                     </div>
                 `;
@@ -234,6 +210,53 @@
             });
         }
 
+        // Comments
+        function showComments(postId, e) {
+            if (e) e.stopImmediatePropagation();
+            currentPostForComment = postId;
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+
+            const list = document.getElementById("comments-list");
+            list.innerHTML = "";
+
+            if (!post.comments || post.comments.length === 0) {
+                list.innerHTML = `<p class="text-zinc-400 text-sm">Nenhum comentário ainda.</p>`;
+            } else {
+                post.comments.forEach(c => {
+                    const d = document.createElement("div");
+                    d.className = "bg-zinc-800 p-4 rounded-2xl";
+                    d.innerHTML = `<span class="font-medium">@${c.author}</span><p class="text-sm mt-1">${c.text}</p>`;
+                    list.appendChild(d);
+                });
+            }
+
+            document.getElementById("comments-modal").classList.remove("hidden");
+            document.getElementById("comments-modal").classList.add("flex");
+        }
+
+        function hideCommentsModal() {
+            document.getElementById("comments-modal").classList.remove("flex");
+            document.getElementById("comments-modal").classList.add("hidden");
+        }
+
+        function addCommentFromModal() {
+            if (!currentUser || !currentPostForComment) return;
+            const input = document.getElementById("comment-input");
+            const text = input.value.trim();
+            if (!text) return;
+
+            const post = posts.find(p => p.id === currentPostForComment);
+            if (post) {
+                post.comments = post.comments || [];
+                post.comments.push({ author: currentUser.nickname, text });
+                saveAll();
+                hideCommentsModal();
+                renderPosts();
+            }
+        }
+
+        // Profile (mais imersivo)
         function showUserProfile(username, e) {
             if (e) e.stopImmediatePropagation();
             const userPosts = posts.filter(p => p.author === username);
@@ -247,7 +270,7 @@
             list.innerHTML = "";
 
             userPosts.forEach(post => {
-                let img = post.image ? `<img src="${post.image}" class="w-full rounded-2xl mb-3 max-h-64 object-cover">` : "";
+                let img = post.image ? `<img src="${post.image}" class="w-full rounded-2xl mb-4 max-h-64 object-cover">` : "";
                 const d = document.createElement("div");
                 d.className = "bg-zinc-800 border border-zinc-700 p-6 rounded-2xl";
                 d.innerHTML = `${img}<h4 class="font-semibold text-xl mb-2">${post.title}</h4><p class="text-sm text-zinc-400">${post.content}</p>`;
@@ -263,117 +286,57 @@
             document.getElementById("profile-modal").classList.add("hidden");
         }
 
-        // Create post with NSFW check
         async function createNewPost() {
             if (!currentUser) return alert("Faça login primeiro");
-
             const title = document.getElementById("new-title").value.trim();
             const content = document.getElementById("new-content").value.trim();
-            if (!title) return alert("Título é obrigatório");
+            if (!title) return;
 
             const imageInput = document.getElementById("post-image");
-            
+
             if (imageInput.files.length > 0) {
                 const file = imageInput.files[0];
                 const img = new Image();
-                
                 const reader = new FileReader();
+
                 reader.onload = async function(e) {
                     img.src = e.target.result;
-                    
                     img.onload = async function() {
-                        // Check for NSFW
                         const isBad = await isNSFW(img);
-                        
                         if (isBad) {
-                            alert("Conteúdo impróprio detectado. Esta publicação foi bloqueada.");
+                            alert("Conteúdo impróprio detectado. Publicação bloqueada.");
                             return;
                         }
-                        
-                        // Save post with image
-                        posts.unshift({
-                            id: Date.now(),
-                            title,
-                            content,
-                            author: currentUser.nickname,
-                            avatar: currentUser.avatar,
-                            image: e.target.result,
-                            likes: 0
-                        });
-                        saveAll();
-                        hideNewPostModal();
-                        renderPosts();
+                        posts.unshift({ id: Date.now(), title, content, author: currentUser.nickname, avatar: currentUser.avatar, image: e.target.result, likes: 0, comments: [] });
+                        saveAll(); hideNewPostModal(); renderPosts();
                         imageInput.value = "";
                         document.getElementById("preview-img").classList.add("hidden");
                     };
                 };
                 reader.readAsDataURL(file);
             } else {
-                // Post without image
-                posts.unshift({
-                    id: Date.now(),
-                    title,
-                    content,
-                    author: currentUser.nickname,
-                    avatar: currentUser.avatar,
-                    likes: 0
-                });
-                saveAll();
-                hideNewPostModal();
-                renderPosts();
+                posts.unshift({ id: Date.now(), title, content, author: currentUser.nickname, avatar: currentUser.avatar, likes: 0, comments: [] });
+                saveAll(); hideNewPostModal(); renderPosts();
             }
         }
 
-        function deletePost(id, e) {
-            e.stopImmediatePropagation();
-            if (!confirm("Apagar publicação?")) return;
-            posts = posts.filter(p => p.id !== id);
-            saveAll();
-            renderPosts();
-        }
-
-        function likePost(id, e) {
-            e.stopImmediatePropagation();
-            const p = posts.find(x => x.id === id);
-            if (p) {
-                p.likes = (p.likes || 0) + 1;
-                saveAll();
-                renderPosts();
-            }
-        }
-
-        function commentOnPost(id, e) {
-            e.stopImmediatePropagation();
-            if (!currentUser) return alert("Faça login para comentar");
-            const t = prompt("Comentário:");
-            if (!t) return;
-            const p = posts.find(x => x.id === id);
-            if (p) {
-                p.comments = p.comments || [];
-                p.comments.push({ author: currentUser.nickname, text: t });
-                saveAll();
-                renderPosts();
-            }
-        }
+        function deletePost(id, e) { e.stopImmediatePropagation(); if (!confirm("Apagar?")) return; posts = posts.filter(p => p.id !== id); saveAll(); renderPosts(); }
+        function likePost(id, e) { e.stopImmediatePropagation(); const p = posts.find(x => x.id === id); if (p) { p.likes = (p.likes||0)+1; saveAll(); renderPosts(); } }
 
         function showNewPostModal() {
             if (!currentUser) return alert("Faça login primeiro");
             document.getElementById("new-post-modal").classList.remove("hidden");
             document.getElementById("new-post-modal").classList.add("flex");
 
-            // Image preview
             const imageInput = document.getElementById("post-image");
             const preview = document.getElementById("preview-img");
             const previewContainer = document.getElementById("image-preview");
 
-            imageInput.onchange = function() {
+            imageInput.onchange = () => {
                 if (imageInput.files.length > 0) {
-                    const reader = new FileReader();
-                    reader.onload = e => {
-                        preview.src = e.target.result;
-                        previewContainer.classList.remove("hidden");
-                    };
-                    reader.readAsDataURL(imageInput.files[0]);
+                    const r = new FileReader();
+                    r.onload = e => { preview.src = e.target.result; previewContainer.classList.remove("hidden"); };
+                    r.readAsDataURL(imageInput.files[0]);
                 }
             };
         }
@@ -384,36 +347,29 @@
         }
 
         function initialize() {
-            // Intro animation
             const txt = document.getElementById("animated-text");
             const word = "fórum";
             txt.innerHTML = "";
             word.split("").forEach((ch, i) => {
                 const s = document.createElement("span");
                 s.className = "inline-block opacity-0 translate-y-5";
-                s.style.transition = `all .55s ease ${0.65 + i * 0.09}s`;
+                s.style.transition = `all .55s ease ${0.65 + i*0.09}s`;
                 s.textContent = ch;
                 txt.appendChild(s);
-                setTimeout(() => { s.style.opacity = "1"; s.style.transform = "translateY(0)"; }, 30);
+                setTimeout(() => { s.style.opacity="1"; s.style.transform="translateY(0)"; },30);
             });
 
             setTimeout(() => {
                 const intro = document.getElementById("intro-screen");
                 intro.style.transition = "opacity .5s ease";
                 intro.style.opacity = "0";
-                setTimeout(() => {
-                    intro.style.display = "none";
-                    document.getElementById("main-app").classList.remove("hidden");
-                }, 500);
+                setTimeout(() => { intro.style.display="none"; document.getElementById("main-app").classList.remove("hidden"); },500);
             }, 3400);
 
             renderUserArea();
             renderPosts();
 
-            // Preload NSFW model in background
-            setTimeout(() => {
-                loadNSFWModel().catch(() => {});
-            }, 5000);
+            setTimeout(() => { loadNSFWModel().catch(()=>{}); }, 5000);
         }
 
         window.onload = initialize;
