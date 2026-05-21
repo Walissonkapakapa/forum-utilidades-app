@@ -7,36 +7,69 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { font-family: 'Inter', system_ui, sans-serif; background-color: #0a0a0a; color: #e5e5e5; }
-        .post-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        .post-card:hover { transform: translateY(-3px); }
-        .minimal-card { background-color: #111111; border: 1px solid #27272a; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        
+        body {
+            font-family: 'Inter', system_ui, sans-serif;
+            background-color: #0a0a0a;
+            color: #e5e5e5;
+        }
+        .font-display {
+            font-family: 'Space Grotesk', system_ui, sans-serif;
+        }
+
+        .post-card {
+            background-color: #111111;
+            border: 1px solid #27272a;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .post-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        .section-title {
+            font-size: 3.25rem;
+            line-height: 1.05;
+            font-weight: 600;
+            letter-spacing: -0.04em;
+        }
+
+        .minimal-input {
+            background-color: #111111;
+            border: 1px solid #27272a;
+        }
+        .minimal-input:focus {
+            border-color: #52525b;
+        }
     </style>
 </head>
 <body>
-    <!-- Intro Animation -->
+    <!-- Intro -->
     <div id="intro-screen" class="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center z-[300]">
         <div class="text-center">
-            <div class="mb-4"><span class="font-display text-[5.5rem] font-bold tracking-[-5px] text-white">sntx</span></div>
-            <div id="animated-text" class="font-display text-4xl font-semibold tracking-[-2px] text-zinc-400"></div>
+            <div class="mb-5">
+                <span class="font-display text-[6rem] font-bold tracking-[-6px] text-white">sntx</span>
+            </div>
+            <div id="animated-text" class="font-display text-4xl font-semibold tracking-[-2.5px] text-zinc-400"></div>
         </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- App -->
     <div id="main-app" class="hidden">
-        <!-- Navbar -->
-        <nav class="bg-zinc-950/95 backdrop-blur border-b border-zinc-800 sticky top-0 z-50">
+        <nav class="bg-zinc-950 border-b border-zinc-800 sticky top-0 z-50">
             <div class="max-w-screen-2xl mx-auto px-8 flex items-center justify-between h-20">
-                <div class="flex items-center gap-x-3">
+                <div class="flex items-center gap-x-4">
                     <div class="w-9 h-9 bg-white rounded-2xl flex items-center justify-center">
-                        <span class="font-black text-black text-2xl">s</span>
+                        <span class="font-black text-2xl text-black">s</span>
                     </div>
                     <span class="font-semibold text-2xl tracking-tight">sntx fórum</span>
                 </div>
 
                 <div class="flex items-center gap-x-4">
                     <div id="user-area"></div>
-                    <button onclick="showNewPostModal()" class="bg-white hover:bg-zinc-100 text-black px-6 h-11 rounded-2xl text-sm font-semibold flex items-center gap-x-2 transition-all active:scale-[0.985]">
+                    <button onclick="showNewPostModal()" 
+                            class="px-7 h-11 bg-white text-black rounded-2xl font-semibold text-sm flex items-center gap-x-2 active:scale-[0.985] transition-transform">
                         <i class="fa-solid fa-plus"></i>
                         <span>Publicar</span>
                     </button>
@@ -44,23 +77,33 @@
             </div>
         </nav>
 
-        <div class="max-w-screen-2xl mx-auto px-8 pt-12">
-            <div class="max-w-3xl mb-10">
-                <h1 class="text-6xl font-semibold tracking-tighter">sntx fórum</h1>
-                <p class="mt-3 text-xl text-zinc-400">Um espaço minimalista para compartilhar métodos que funcionam.</p>
+        <div class="max-w-screen-2xl mx-auto px-8 pt-14 pb-16">
+            <div class="max-w-2xl mb-12">
+                <h1 class="section-title">sntx fórum</h1>
+                <p class="mt-4 text-xl text-zinc-400">Um espaço calmo e minimalista para compartilhar métodos que realmente funcionam.</p>
             </div>
 
-            <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+            <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
     </div>
 
     <!-- New Post Modal -->
-    <div id="new-post-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[200]">
+    <div id="new-post-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[200] p-4">
         <div class="bg-zinc-900 border border-zinc-700 w-full max-w-lg rounded-3xl p-8">
-            <h3 class="text-2xl font-semibold mb-7">Nova publicação</h3>
-            <input id="new-title" type="text" placeholder="Título da publicação" class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3.5 mb-4">
-            <textarea id="new-content" placeholder="Descreva o método ou dica..." class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3.5 h-36 mb-6"></textarea>
-            <div class="flex justify-end gap-x-3">
+            <h3 class="text-2xl font-semibold mb-8">Nova publicação</h3>
+            
+            <div class="space-y-5">
+                <div>
+                    <label class="text-xs tracking-[1px] text-zinc-500 block mb-2">TÍTULO</label>
+                    <input id="new-title" type="text" class="minimal-input w-full rounded-2xl px-5 py-3.5 text-lg" placeholder="Título da sua publicação">
+                </div>
+                <div>
+                    <label class="text-xs tracking-[1px] text-zinc-500 block mb-2">DESCRIÇÃO</label>
+                    <textarea id="new-content" class="minimal-input w-full rounded-2xl px-5 py-4 h-40 text-[15px]" placeholder="Descreva o método..."></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-x-3 mt-8">
                 <button onclick="hideNewPostModal()" class="px-7 py-3 text-sm text-zinc-400 hover:text-white">Cancelar</button>
                 <button onclick="createNewPost()" class="bg-white text-black px-8 py-3 rounded-2xl font-semibold">Publicar</button>
             </div>
@@ -69,273 +112,176 @@
 
     <!-- Profile Modal -->
     <div id="profile-modal" onclick="if (event.target.id === 'profile-modal') hideProfileModal()" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[200] p-4">
-        <div onclick="event.stopImmediatePropagation()" class="bg-zinc-900 border border-zinc-700 w-full max-w-2xl rounded-3xl p-8">
-            <div class="flex items-center gap-x-4 mb-8">
-                <img id="profile-avatar" class="w-16 h-16 rounded-2xl object-cover border border-zinc-700">
+        <div onclick="event.stopImmediatePropagation()" class="bg-zinc-900 border border-zinc-700 w-full max-w-2xl rounded-3xl p-9">
+            <div class="flex items-center gap-x-5 mb-9">
+                <img id="profile-avatar" class="w-20 h-20 rounded-2xl object-cover border border-zinc-700">
                 <div>
-                    <div id="profile-nickname" class="text-3xl font-semibold"></div>
-                    <div id="profile-post-count" class="text-zinc-400"></div>
+                    <div id="profile-nickname" class="text-4xl font-semibold"></div>
+                    <div id="profile-count" class="text-zinc-400 mt-1"></div>
                 </div>
             </div>
 
-            <h4 class="font-semibold mb-4 text-lg">Publicações deste usuário</h4>
-            <div id="profile-posts" class="space-y-4 max-h-[400px] overflow-auto pr-2"></div>
+            <h4 class="font-semibold mb-5 text-lg">Publicações</h4>
+            <div id="profile-posts-list" class="space-y-4 max-h-[420px] overflow-auto"></div>
 
-            <div class="mt-8 flex justify-end">
-                <button onclick="hideProfileModal()" class="px-6 py-2 text-sm text-zinc-400 hover:text-white">Fechar</button>
+            <div class="mt-8 text-right">
+                <button onclick="hideProfileModal()" class="text-sm text-zinc-400 hover:text-white">Fechar</button>
             </div>
         </div>
     </div>
 
     <script>
-        // ==================== HASHED ADMIN PASSWORD ====================
-        const ADMIN_PASSWORD_HASH = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"; // SHA-256 of 746507
+        // Admin password hash (746507)
+        const ADMIN_PASSWORD_HASH = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
 
         async function hashString(str) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(str);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+            const enc = new TextEncoder();
+            const buf = await crypto.subtle.digest("SHA-256", enc.encode(str));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
         }
 
         async function toggleAdmin() {
             if (isAdmin) {
-                isAdmin = false;
-                alert('Modo Admin desativado');
-                renderPosts();
-                return;
+                isAdmin = false; alert("Modo Admin desativado"); renderPosts(); return;
             }
-            const pass = prompt('Digite a senha de admin:');
-            if (!pass) return;
-            const hashed = await hashString(pass);
-            if (hashed === ADMIN_PASSWORD_HASH) {
-                isAdmin = true;
-                alert('Modo Admin ativado');
-                renderPosts();
-            } else {
-                alert('Senha incorreta');
-            }
+            const p = prompt("Senha de admin:");
+            if (!p) return;
+            if (await hashString(p) === ADMIN_PASSWORD_HASH) {
+                isAdmin = true; alert("Modo Admin ativado"); renderPosts();
+            } else alert("Senha incorreta");
         }
 
-        // ==================== DATA ====================
-        let posts = JSON.parse(localStorage.getItem('sntxPosts') || '[]');
-        let currentUser = JSON.parse(localStorage.getItem('sntxUser') || 'null');
+        let posts = JSON.parse(localStorage.getItem("sntxPosts") || "[]");
+        let currentUser = JSON.parse(localStorage.getItem("sntxUser") || "null");
         let isAdmin = false;
-        let bannedUsers = JSON.parse(localStorage.getItem('sntxBanned') || '[]');
 
         function saveAll() {
-            localStorage.setItem('sntxPosts', JSON.stringify(posts));
-            if (currentUser) localStorage.setItem('sntxUser', JSON.stringify(currentUser));
-            localStorage.setItem('sntxBanned', JSON.stringify(bannedUsers));
+            localStorage.setItem("sntxPosts", JSON.stringify(posts));
+            if (currentUser) localStorage.setItem("sntxUser", JSON.stringify(currentUser));
         }
 
         function renderUserArea() {
-            const el = document.getElementById('user-area');
+            const el = document.getElementById("user-area");
             if (!currentUser) {
-                el.innerHTML = `<button onclick="login()" class="px-5 py-2 border border-zinc-700 rounded-2xl text-sm">Entrar</button>`;
+                el.innerHTML = `<button onclick="login()" class="px-6 py-2 border border-zinc-700 rounded-2xl text-sm">Entrar</button>`;
             } else {
-                el.innerHTML = `<div class="flex items-center gap-x-3"><div onclick="editProfile()" class="flex items-center gap-x-2 cursor-pointer"><img src="${currentUser.avatar}" class="w-8 h-8 rounded-2xl object-cover border border-zinc-700"><span class="font-medium">@${currentUser.nickname}</span></div><button onclick="logout()" class="text-xs text-zinc-500">sair</button></div>`;
+                el.innerHTML = `<div class="flex items-center gap-x-3"><div onclick="editProfile()" class="flex items-center gap-x-2 cursor-pointer"><img src="${currentUser.avatar}" class="w-8 h-8 rounded-2xl object-cover border border-zinc-700"><span>@${currentUser.nickname}</span></div><button onclick="logout()" class="text-xs text-zinc-500">sair</button></div>`;
             }
         }
 
         function login() {
-            const nick = prompt('Escolha seu apelido:');
+            const nick = prompt("Seu apelido:");
             if (!nick) return;
-            currentUser = { nickname: nick, avatar: 'https://i.pravatar.cc/128?img=47' };
-            saveAll();
-            renderUserArea();
-            renderPosts();
+            currentUser = { nickname: nick, avatar: "https://i.pravatar.cc/128?img=47" };
+            saveAll(); renderUserArea(); renderPosts();
         }
 
-        function logout() {
-            currentUser = null;
-            localStorage.removeItem('sntxUser');
-            renderUserArea();
-            renderPosts();
-        }
+        function logout() { currentUser = null; localStorage.removeItem("sntxUser"); renderUserArea(); renderPosts(); }
 
         function editProfile() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = e => {
-                const reader = new FileReader();
-                reader.onload = ev => {
-                    currentUser.avatar = ev.target.result;
-                    saveAll();
-                    renderUserArea();
-                    renderPosts();
-                };
-                reader.readAsDataURL(e.target.files[0]);
+            const inp = document.createElement("input");
+            inp.type = "file"; inp.accept = "image/*";
+            inp.onchange = e => {
+                const r = new FileReader();
+                r.onload = ev => { currentUser.avatar = ev.target.result; saveAll(); renderUserArea(); renderPosts(); };
+                r.readAsDataURL(e.target.files[0]);
             };
-            input.click();
+            inp.click();
         }
 
-        // ==================== RENDER POSTS ====================
         function renderPosts() {
-            const container = document.getElementById('posts-container');
-            container.innerHTML = '';
+            const c = document.getElementById("posts-container");
+            c.innerHTML = "";
 
             posts.forEach(post => {
-                if (bannedUsers.includes(post.author)) return;
-
                 const canDelete = currentUser && (post.author === currentUser.nickname || isAdmin);
-
-                const card = document.createElement('div');
-                card.className = 'minimal-card post-card rounded-3xl p-7 cursor-pointer';
+                const card = document.createElement("div");
+                card.className = "post-card minimal-card rounded-3xl p-8 cursor-pointer";
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-5">
-                        <span class="text-xs px-3.5 py-1 bg-zinc-800 rounded-full text-zinc-400">${post.category || 'Geral'}</span>
-                        ${canDelete ? `<button onclick="deletePost(${post.id}, event)" class="text-red-400 text-xs hover:text-red-500">Apagar</button>` : ''}
+                    <div class="flex justify-between mb-6">
+                        <span class="text-xs px-4 py-1 bg-zinc-800 rounded-full">${post.category || "Geral"}</span>
+                        ${canDelete ? `<button onclick="deletePost(${post.id}, event)" class="text-red-400 text-xs">Apagar</button>` : ""}
                     </div>
                     <h3 class="font-semibold text-2xl leading-tight mb-4">${post.title}</h3>
-                    <p class="text-[15px] text-zinc-400 leading-relaxed line-clamp-3">${post.content}</p>
+                    <p class="text-[15px] text-zinc-400 leading-relaxed">${post.content}</p>
 
-                    <div class="flex items-center justify-between mt-7 pt-5 border-t border-zinc-800">
+                    <div class="mt-8 pt-6 border-t border-zinc-800 flex items-center justify-between">
                         <div onclick="showUserProfile('${post.author}', event)" class="flex items-center gap-x-3 cursor-pointer">
-                            <img src="${post.avatar}" class="w-8 h-8 rounded-2xl object-cover border border-zinc-700">
-                            <span class="text-sm text-zinc-300">@${post.author}</span>
+                            <img src="${post.avatar}" class="w-8 h-8 rounded-2xl object-cover">
+                            <span class="text-sm">@${post.author}</span>
                         </div>
-                        <div class="flex items-center gap-x-5 text-sm text-zinc-400">
-                            <button onclick="likePost(${post.id}, event)" class="flex items-center gap-x-1.5 hover:text-white">
-                                <i class="fa-solid fa-heart"></i>
-                                <span>${post.likes || 0}</span>
-                            </button>
-                            <button onclick="commentOnPost(${post.id}, event)" class="flex items-center gap-x-1.5 hover:text-white">
-                                <i class="fa-regular fa-comment"></i>
-                            </button>
+                        <div class="flex gap-x-6 text-sm text-zinc-400">
+                            <button onclick="likePost(${post.id}, event)" class="flex items-center gap-x-2 hover:text-white"><i class="fa-solid fa-heart"></i> <span>${post.likes || 0}</span></button>
+                            <button onclick="commentOnPost(${post.id}, event)" class="flex items-center gap-x-2 hover:text-white"><i class="fa-regular fa-comment"></i></button>
                         </div>
                     </div>
                 `;
-                container.appendChild(card);
+                c.appendChild(card);
             });
         }
 
-        // ==================== PROFILE SYSTEM ====================
         function showUserProfile(username, e) {
             if (e) e.stopImmediatePropagation();
-
             const userPosts = posts.filter(p => p.author === username);
-            if (userPosts.length === 0) return;
+            if (!userPosts.length) return;
 
-            const avatar = userPosts[0].avatar;
+            document.getElementById("profile-avatar").src = userPosts[0].avatar;
+            document.getElementById("profile-nickname").innerText = `@${username}`;
+            document.getElementById("profile-count").innerText = `${userPosts.length} publicações`;
 
-            document.getElementById('profile-avatar').src = avatar;
-            document.getElementById('profile-nickname').innerHTML = `@${username}`;
-            document.getElementById('profile-post-count').innerHTML = `${userPosts.length} publicações`;
-
-            const postsContainer = document.getElementById('profile-posts');
-            postsContainer.innerHTML = '';
-
-            userPosts.forEach(post => {
-                const div = document.createElement('div');
-                div.className = 'minimal-card p-5 rounded-2xl';
-                div.innerHTML = `
-                    <h4 class="font-semibold mb-2">${post.title}</h4>
-                    <p class="text-sm text-zinc-400 line-clamp-2">${post.content}</p>
-                `;
-                postsContainer.appendChild(div);
+            const list = document.getElementById("profile-posts-list");
+            list.innerHTML = "";
+            userPosts.forEach(p => {
+                const d = document.createElement("div");
+                d.className = "minimal-card p-6 rounded-2xl";
+                d.innerHTML = `<h4 class="font-semibold mb-2">${p.title}</h4><p class="text-sm text-zinc-400">${p.content}</p>`;
+                list.appendChild(d);
             });
 
-            document.getElementById('profile-modal').classList.remove('hidden');
-            document.getElementById('profile-modal').classList.add('flex');
+            document.getElementById("profile-modal").classList.remove("hidden");
+            document.getElementById("profile-modal").classList.add("flex");
         }
 
         function hideProfileModal() {
-            document.getElementById('profile-modal').classList.remove('flex');
-            document.getElementById('profile-modal').classList.add('hidden');
+            document.getElementById("profile-modal").classList.remove("flex");
+            document.getElementById("profile-modal").classList.add("hidden");
         }
 
-        // ==================== OTHER FUNCTIONS ====================
         function createNewPost() {
-            if (!currentUser) return alert('Faça login primeiro');
-            const title = document.getElementById('new-title').value.trim();
-            const content = document.getElementById('new-content').value.trim();
-            if (!title) return;
-
-            posts.unshift({
-                id: Date.now(),
-                title,
-                content,
-                author: currentUser.nickname,
-                avatar: currentUser.avatar,
-                category: 'Geral',
-                likes: 0,
-                comments: []
-            });
-            saveAll();
-            hideNewPostModal();
-            renderPosts();
+            if (!currentUser) return alert("Faça login primeiro");
+            const t = document.getElementById("new-title").value.trim();
+            const c = document.getElementById("new-content").value.trim();
+            if (!t) return;
+            posts.unshift({ id: Date.now(), title: t, content: c, author: currentUser.nickname, avatar: currentUser.avatar, likes: 0 });
+            saveAll(); hideNewPostModal(); renderPosts();
         }
 
-        function deletePost(id, e) {
-            e.stopImmediatePropagation();
-            if (!confirm('Apagar esta publicação?')) return;
-            posts = posts.filter(p => p.id !== id);
-            saveAll();
-            renderPosts();
-        }
+        function deletePost(id, e) { e.stopImmediatePropagation(); if (!confirm("Apagar?")) return; posts = posts.filter(p => p.id !== id); saveAll(); renderPosts(); }
+        function likePost(id, e) { e.stopImmediatePropagation(); const p = posts.find(x => x.id === id); if (p) { p.likes = (p.likes||0)+1; saveAll(); renderPosts(); } }
+        function commentOnPost(id, e) { e.stopImmediatePropagation(); if (!currentUser) return alert("Login necessário"); const t = prompt("Comentário:"); if (!t) return; const p = posts.find(x => x.id === id); if (p) { p.comments = p.comments || []; p.comments.push({author:currentUser.nickname, text:t}); saveAll(); renderPosts(); } }
 
-        function likePost(id, e) {
-            e.stopImmediatePropagation();
-            const post = posts.find(p => p.id === id);
-            if (post) {
-                post.likes = (post.likes || 0) + 1;
-                saveAll();
-                renderPosts();
-            }
-        }
-
-        function commentOnPost(id, e) {
-            e.stopImmediatePropagation();
-            if (!currentUser) return alert('Faça login para comentar');
-            const text = prompt('Seu comentário:');
-            if (!text) return;
-            const post = posts.find(p => p.id === id);
-            if (post) {
-                post.comments = post.comments || [];
-                post.comments.push({ author: currentUser.nickname, text });
-                saveAll();
-                renderPosts();
-            }
-        }
-
-        function showNewPostModal() {
-            if (!currentUser) return alert('Faça login primeiro');
-            document.getElementById('new-post-modal').classList.remove('hidden');
-            document.getElementById('new-post-modal').classList.add('flex');
-        }
-
-        function hideNewPostModal() {
-            document.getElementById('new-post-modal').classList.remove('flex');
-            document.getElementById('new-post-modal').classList.add('hidden');
-        }
+        function showNewPostModal() { if (!currentUser) return alert("Login necessário"); document.getElementById("new-post-modal").classList.remove("hidden"); document.getElementById("new-post-modal").classList.add("flex"); }
+        function hideNewPostModal() { document.getElementById("new-post-modal").classList.remove("flex"); document.getElementById("new-post-modal").classList.add("hidden"); }
 
         function initialize() {
-            // Intro animation
-            const container = document.getElementById('animated-text');
-            const text = "fórum";
-            container.innerHTML = '';
-            text.split('').forEach((char, i) => {
-                const span = document.createElement('span');
-                span.className = 'inline-block opacity-0 translate-y-4';
-                span.style.transition = `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.6 + i * 0.08}s`;
-                span.textContent = char;
-                container.appendChild(span);
-                setTimeout(() => {
-                    span.style.opacity = '1';
-                    span.style.transform = 'translateY(0)';
-                }, 50);
+            // Intro
+            const txt = document.getElementById("animated-text");
+            const word = "fórum";
+            txt.innerHTML = "";
+            word.split("").forEach((ch, i) => {
+                const s = document.createElement("span");
+                s.className = "inline-block opacity-0 translate-y-6";
+                s.style.transition = `all .6s cubic-bezier(.34,1.56,.64,1) ${.65 + i*.09}s`;
+                s.textContent = ch;
+                txt.appendChild(s);
+                setTimeout(()=>{ s.style.opacity="1"; s.style.transform="translateY(0)"; },30);
             });
 
             setTimeout(() => {
-                const intro = document.getElementById('intro-screen');
-                intro.style.transition = 'opacity 0.5s ease';
-                intro.style.opacity = '0';
-                setTimeout(() => {
-                    intro.style.display = 'none';
-                    document.getElementById('main-app').classList.remove('hidden');
-                }, 500);
+                const intro = document.getElementById("intro-screen");
+                intro.style.transition = "opacity .5s ease";
+                intro.style.opacity = "0";
+                setTimeout(() => { intro.style.display = "none"; document.getElementById("main-app").classList.remove("hidden"); }, 500);
             }, 3400);
 
             renderUserArea();
