@@ -13,17 +13,14 @@
     </style>
 </head>
 <body>
-    <!-- Intro Animation -->
+    <!-- Intro -->
     <div id="intro-screen" class="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center z-[300]">
         <div class="text-center">
-            <div class="mb-3">
-                <span class="font-display text-[5.5rem] font-bold tracking-[-4px] text-white">sntx</span>
-            </div>
+            <div class="mb-3"><span class="font-display text-[5.5rem] font-bold tracking-[-4px] text-white">sntx</span></div>
             <div id="animated-text" class="font-display text-4xl font-semibold tracking-[-2px] text-zinc-400"></div>
         </div>
     </div>
 
-    <!-- Main App -->
     <div id="main-app" class="hidden">
         <nav class="bg-zinc-950 border-b border-zinc-800 sticky top-0 z-50">
             <div class="max-w-screen-2xl mx-auto px-6 flex items-center justify-between h-16">
@@ -47,7 +44,7 @@
             </div>
 
             <div class="flex justify-end mb-4">
-                <button onclick="toggleAdmin()" class="text-xs px-4 py-1.5 border border-zinc-700 rounded-2xl hover:bg-zinc-900">Ativar Modo Admin</button>
+                <button onclick="toggleAdmin()" class="text-xs px-4 py-1.5 border border-zinc-700 rounded-2xl hover:bg-zinc-900">Modo Admin</button>
             </div>
 
             <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
@@ -67,30 +64,39 @@
     </div>
 
     <script>
-        function startIntroAnimation() {
-            const container = document.getElementById('animated-text');
-            const text = "fórum";
-            container.innerHTML = '';
-            text.split('').forEach((char, i) => {
-                const span = document.createElement('span');
-                span.className = 'inline-block opacity-0 translate-y-5';
-                span.style.transition = `all 0.5s ease ${0.7 + i * 0.1}s`;
-                span.textContent = char;
-                container.appendChild(span);
-                setTimeout(() => { span.style.opacity = '1'; span.style.transform = 'translateY(0)'; }, 50);
-            });
+        // ==================== HASHED PASSWORD (746507) ====================
+        const ADMIN_PASSWORD_HASH = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"; // SHA-256 of "746507"
 
-            setTimeout(() => {
-                const intro = document.getElementById('intro-screen');
-                intro.style.transition = 'opacity 0.5s ease';
-                intro.style.opacity = '0';
-                setTimeout(() => {
-                    intro.style.display = 'none';
-                    document.getElementById('main-app').classList.remove('hidden');
-                }, 500);
-            }, 3200);
+        async function hashString(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
+        async function toggleAdmin() {
+            if (isAdmin) {
+                isAdmin = false;
+                alert('Modo Admin desativado');
+                renderPosts();
+                return;
+            }
+
+            const pass = prompt('Digite a senha de admin:');
+            if (!pass) return;
+
+            const hashedInput = await hashString(pass);
+            if (hashedInput === ADMIN_PASSWORD_HASH) {
+                isAdmin = true;
+                alert('Modo Admin ativado');
+                renderPosts();
+            } else {
+                alert('Senha incorreta');
+            }
+        }
+
+        // ==================== RESTO DO CÓDIGO ====================
         let posts = JSON.parse(localStorage.getItem('sntxPosts') || '[]');
         let currentUser = JSON.parse(localStorage.getItem('sntxUser') || 'null');
         let isAdmin = false;
@@ -132,12 +138,6 @@
                 reader.readAsDataURL(e.target.files[0]);
             };
             input.click();
-        }
-
-        function toggleAdmin() {
-            isAdmin = !isAdmin;
-            alert(isAdmin ? 'Modo Admin ativado' : 'Modo Admin desativado');
-            renderPosts();
         }
 
         function renderPosts() {
@@ -183,14 +183,34 @@
         function hideNewPostModal() { document.getElementById('new-post-modal').classList.remove('flex'); document.getElementById('new-post-modal').classList.add('hidden'); }
 
         function initialize() {
-            startIntroAnimation();
+            // Inicia animação da intro
+            const container = document.getElementById('animated-text');
+            const text = "fórum";
+            container.innerHTML = '';
+            text.split('').forEach((char, i) => {
+                const span = document.createElement('span');
+                span.className = 'inline-block opacity-0 translate-y-5';
+                span.style.transition = `all 0.5s ease ${0.7 + i * 0.1}s`;
+                span.textContent = char;
+                container.appendChild(span);
+                setTimeout(() => { span.style.opacity = '1'; span.style.transform = 'translateY(0)'; }, 50);
+            });
+
+            setTimeout(() => {
+                document.getElementById('intro-screen').style.transition = 'opacity 0.5s ease';
+                document.getElementById('intro-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('intro-screen').style.display = 'none';
+                    document.getElementById('main-app').classList.remove('hidden');
+                }, 500);
+            }, 3200);
+
             renderUserArea();
             renderPosts();
-            if (posts.length === 0) {
-                posts.push({id:1, title:"Bem-vindo ao sntx fórum", content:"Design mais limpo e profissional. Use o botão Modo Admin para gerenciar posts.", author:"sntx", avatar:"https://i.pravatar.cc/128?img=47", likes:15, comments:[]});
-                saveAll(); renderPosts();
-            }
+
+            // Sem post de "Bem-vindo" com senha
         }
+
         window.onload = initialize;
     </script>
 </body>
