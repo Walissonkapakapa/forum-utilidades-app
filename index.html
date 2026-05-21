@@ -7,410 +7,283 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
-        
-        :root {
-            --bg: #0a0a0a;
-            --card: #111111;
-            --border: #27272a;
-        }
-        
-        body { 
-            font-family: 'Inter', system_ui, sans-serif; 
-            background-color: var(--bg);
-            color: #e5e5e5;
-        }
-        .font-display { font-family: 'Space Grotesk', 'Inter', sans-serif; font-weight: 600; }
-
-        .post-card {
-            background-color: var(--card);
-            border: 1px solid var(--border);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .post-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-            border-color: #3f3f46;
-        }
-
-        .category-badge {
-            background-color: #27272a;
-            color: #a1a1aa;
-            font-size: 0.75rem;
-            padding: 2px 10px;
-            border-radius: 9999px;
-            font-weight: 600;
-        }
-
-        .modal {
-            animation: modalEnter 0.2s cubic-bezier(0.32, 0.72, 0, 1);
-        }
-        @keyframes modalEnter {
-            from { opacity: 0; transform: scale(0.96) translateY(20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        .publish-btn {
-            transition: all 0.2s ease;
-        }
-        .publish-btn:active {
-            transform: scale(0.95);
-        }
-
-        .success-toast {
-            animation: toastPop 0.4s ease forwards;
-        }
-        @keyframes toastPop {
-            0% { transform: translateY(20px); opacity: 0; }
-            100% { transform: translateY(0); opacity: 1; }
-        }
-
-        .avatar { border: 2px solid #27272a; }
-        .dark-input { background-color: #111111; border: 1px solid #27272a; color: #e5e5e5; }
-        .dark-input:focus { border-color: #52525b; }
+        body { font-family: 'Inter', system_ui, sans-serif; background-color: #0a0a0a; color: #e5e5e5; }
+        .post-card { transition: all 0.3s ease; }
+        .post-card:hover { transform: translateY(-3px); }
+        .modal { animation: modalPop 0.2s ease forwards; }
+        @keyframes modalPop { from {opacity:0; transform:scale(0.95);} to {opacity:1; transform:scale(1);} }
     </style>
 </head>
-<body class="bg-zinc-950 text-zinc-200">
+<body>
     <!-- Navbar -->
-    <nav class="bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800 sticky top-0 z-50">
-        <div class="max-w-screen-2xl mx-auto px-6">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-x-3">
-                    <div class="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-inner">
-                        <span class="font-display text-3xl font-black text-black">sntx</span>
-                    </div>
-                    <div>
-                        <span class="font-display text-3xl font-semibold tracking-[-2px] text-white">sntx</span>
-                        <span class="font-display text-3xl font-semibold tracking-[-2px] text-zinc-400">fórum</span>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-x-3">
-                    <div class="relative w-80 hidden md:block">
-                        <input id="search-input" type="text" placeholder="Buscar no sntx fórum..." 
-                               class="w-full bg-zinc-900 border border-zinc-800 pl-11 py-2.5 text-sm rounded-3xl focus:outline-none focus:border-zinc-600"
-                               onkeyup="filterPosts()">
-                        <i class="fa-solid fa-search absolute left-4 top-3 text-zinc-500"></i>
-                    </div>
-
-                    <div id="user-area"></div>
-
-                    <button onclick="showNewPostModal()" 
-                            class="publish-btn flex items-center gap-x-2.5 bg-white hover:bg-zinc-100 active:scale-[0.985] text-black px-6 h-11 rounded-3xl text-sm font-semibold shadow-sm transition-all">
-                        <i class="fa-solid fa-plus"></i>
-                        <span>Publicar</span>
-                    </button>
-                </div>
+    <nav class="bg-zinc-950 border-b border-zinc-800 sticky top-0 z-50">
+        <div class="max-w-screen-2xl mx-auto px-6 flex items-center justify-between h-16">
+            <div class="flex items-center gap-x-3">
+                <div class="w-9 h-9 bg-white rounded-2xl flex items-center justify-center"><span class="font-bold text-black text-2xl">sntx</span></div>
+                <span class="font-semibold text-2xl tracking-tight">sntx fórum</span>
+            </div>
+            <div class="flex items-center gap-x-4">
+                <div id="user-area"></div>
+                <button onclick="showNewPostModal()" class="bg-white text-black px-5 py-2 rounded-2xl font-semibold text-sm flex items-center gap-x-2">
+                    <i class="fa-solid fa-plus"></i> <span>Publicar</span>
+                </button>
             </div>
         </div>
     </nav>
 
-    <div class="max-w-screen-2xl mx-auto px-6 pt-10 pb-16">
-        <div class="max-w-2xl mb-10">
-            <h1 class="text-6xl font-semibold tracking-tighter text-white">sntx fórum</h1>
-            <p class="mt-3 text-xl text-zinc-400">Um espaço bonito para compartilhar métodos que realmente funcionam.</p>
+    <div class="max-w-screen-2xl mx-auto px-6 pt-8">
+        <div class="flex justify-between items-end mb-6">
+            <div>
+                <h1 class="text-5xl font-semibold tracking-tighter">sntx fórum</h1>
+                <p class="text-zinc-400 mt-1">Compartilhe métodos que funcionam de verdade.</p>
+            </div>
+            <button onclick="toggleAdmin()" class="text-xs px-4 py-2 border border-zinc-700 rounded-2xl hover:bg-zinc-900">Modo Admin</button>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- Sidebar -->
-            <div class="lg:col-span-3">
-                <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 sticky top-24">
-                    <div class="text-xs font-semibold tracking-[2px] text-zinc-500 mb-4 px-1">CATEGORIAS</div>
-                    <div id="category-list" class="space-y-1 text-sm"></div>
-                </div>
-            </div>
+        <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
 
-            <!-- Feed -->
-            <div class="lg:col-span-9">
-                <div class="flex items-center justify-between mb-5 px-1">
-                    <div class="font-semibold text-2xl" id="posts-count"></div>
-                </div>
-                <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    <!-- Intro Modal (tela de intro) -->
+    <div id="intro-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[200]">
+        <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-8 max-w-md text-center">
+            <div class="w-16 h-16 bg-white rounded-2xl mx-auto flex items-center justify-center mb-6">
+                <span class="text-black text-4xl font-black">sntx</span>
             </div>
+            <h2 class="text-3xl font-semibold mb-2">Bem-vindo ao sntx fórum</h2>
+            <p class="text-zinc-400 mb-6">Um espaço para compartilhar métodos úteis, scripts e técnicas que realmente funcionam.</p>
+            <button onclick="closeIntro()" class="bg-white text-black w-full py-3 rounded-2xl font-semibold">Entrar no fórum</button>
         </div>
     </div>
 
-    <!-- New Post Modal (mais elaborado) -->
-    <div id="new-post-modal" onclick="if (event.target.id === 'new-post-modal') hideNewPostModal()" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-        <div onclick="event.stopImmediatePropagation()" class="bg-zinc-900 border border-zinc-800 w-full max-w-lg rounded-3xl overflow-hidden modal">
-            <div class="px-7 pt-7 pb-5">
-                <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h3 class="text-2xl font-semibold">Nova publicação</h3>
-                        <p class="text-sm text-zinc-400">Compartilhe algo útil com a comunidade</p>
-                    </div>
-                    <button onclick="hideNewPostModal()" class="text-zinc-400 hover:text-white p-2"><i class="fa-solid fa-times text-2xl"></i></button>
-                </div>
-
-                <div class="space-y-5">
-                    <div>
-                        <label class="text-xs tracking-wider text-zinc-500 block mb-1.5">CATEGORIA</label>
-                        <select id="new-category" class="dark-input w-full rounded-2xl px-4 py-3 text-sm">
-                            <option>Produtividade</option>
-                            <option>Scripts &amp; Automação</option>
-                            <option>Dicas de Estudo</option>
-                            <option>Organização Pessoal</option>
-                            <option>Programação &amp; Tech</option>
-                            <option>Vida &amp; Hábitos</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="text-xs tracking-wider text-zinc-500 block mb-1.5">TÍTULO</label>
-                        <input id="new-title" type="text" class="dark-input w-full rounded-2xl px-4 py-3 text-sm" placeholder="Ex: Método Pomodoro que mudou minha produtividade">
-                    </div>
-
-                    <div>
-                        <label class="text-xs tracking-wider text-zinc-500 block mb-1.5">DESCRIÇÃO / MÉTODO</label>
-                        <textarea id="new-content" rows="6" class="dark-input w-full rounded-3xl px-4 py-3 text-sm resize-y" placeholder="Descreva o método passo a passo..."></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <div class="px-7 py-5 bg-zinc-950 border-t border-zinc-800 flex justify-end gap-x-3">
-                <button onclick="hideNewPostModal()" class="px-6 py-2.5 text-sm text-zinc-400 hover:text-white rounded-2xl">Cancelar</button>
-                <button onclick="createNewPost()" 
-                        class="publish-btn px-8 py-2.5 bg-white text-black font-semibold rounded-2xl flex items-center gap-x-2 active:scale-[0.97]">
-                    <span>Publicar no sntx</span>
-                </button>
+    <!-- New Post Modal -->
+    <div id="new-post-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[100]">
+        <div class="bg-zinc-900 border border-zinc-700 w-full max-w-lg rounded-3xl p-7">
+            <h3 class="text-2xl font-semibold mb-5">Nova publicação</h3>
+            
+            <input id="new-title" type="text" placeholder="Título" class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 mb-4">
+            <textarea id="new-content" placeholder="Descreva o método..." class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 h-32 mb-4"></textarea>
+            
+            <div class="flex justify-end gap-x-3">
+                <button onclick="hideNewPostModal()" class="px-6 py-2 text-sm">Cancelar</button>
+                <button onclick="createNewPost()" class="bg-white text-black px-8 py-2 rounded-2xl font-semibold">Publicar</button>
             </div>
         </div>
     </div>
 
     <script>
-        // ==================== SOUND SYSTEM ====================
-        let audioContext;
-        function initAudio() {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-        }
+        let posts = JSON.parse(localStorage.getItem('sntxPosts') || '[]');
+        let currentUser = JSON.parse(localStorage.getItem('sntxUser') || 'null');
+        let isAdmin = false;
+        let bannedUsers = JSON.parse(localStorage.getItem('sntxBanned') || '[]');
 
-        function playSound(type = 'publish') {
-            initAudio();
-            const oscillator = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            const filter = audioContext.createBiquadFilter();
-
-            if (type === 'publish') {
-                // Som bonito de publicação (chime suave)
-                oscillator.type = 'sine';
-                oscillator.frequency.value = 880;
-                gain.gain.value = 0.3;
-                filter.type = 'lowpass';
-                filter.frequency.value = 1200;
-
-                const osc2 = audioContext.createOscillator();
-                osc2.type = 'sine';
-                osc2.frequency.value = 1320;
-                const gain2 = audioContext.createGain();
-                gain2.gain.value = 0.15;
-
-                const now = audioContext.currentTime;
-                gain.gain.setValueAtTime(0.3, now);
-                gain.gain.linearRampToValueAtTime(0, now + 1.2);
-
-                oscillator.connect(filter);
-                filter.connect(gain);
-                gain.connect(audioContext.destination);
-
-                osc2.connect(gain2);
-                gain2.connect(audioContext.destination);
-
-                oscillator.start(now);
-                osc2.start(now);
-                oscillator.stop(now + 1.4);
-                osc2.stop(now + 1.4);
-            } else if (type === 'click') {
-                oscillator.type = 'square';
-                oscillator.frequency.value = 1200;
-                gain.gain.value = 0.1;
-                const now = audioContext.currentTime;
-                gain.gain.setValueAtTime(0.1, now);
-                gain.gain.linearRampToValueAtTime(0, now + 0.15);
-                oscillator.connect(gain);
-                gain.connect(audioContext.destination);
-                oscillator.start(now);
-                oscillator.stop(now + 0.2);
-            }
-        }
-
-        // ==================== DATA & USER ====================
-        let posts = [];
-        let currentUser = null;
-
-        function loadData() {
-            posts = JSON.parse(localStorage.getItem('sntxPosts') || '[]');
-            currentUser = JSON.parse(localStorage.getItem('sntxUser') || 'null');
-        }
-
-        function saveData() {
+        function saveAll() {
             localStorage.setItem('sntxPosts', JSON.stringify(posts));
             if (currentUser) localStorage.setItem('sntxUser', JSON.stringify(currentUser));
+            localStorage.setItem('sntxBanned', JSON.stringify(bannedUsers));
         }
 
         function renderUserArea() {
-            const container = document.getElementById('user-area');
+            const el = document.getElementById('user-area');
             if (!currentUser) {
-                container.innerHTML = `<button onclick="showLogin()" class="px-5 py-2 border border-zinc-700 hover:bg-zinc-900 rounded-3xl text-sm flex items-center gap-x-2"><i class="fa-solid fa-user"></i> <span>Entrar</span></button>`;
+                el.innerHTML = `<button onclick="login()" class="px-4 py-2 border border-zinc-700 rounded-2xl text-sm">Entrar / Criar Perfil</button>`;
             } else {
-                container.innerHTML = `
+                el.innerHTML = `
                     <div class="flex items-center gap-x-3">
-                        <div class="flex items-center gap-x-2 cursor-pointer" onclick="showLogin()">
-                            <img src="${currentUser.avatar}" class="w-9 h-9 rounded-2xl object-cover border border-zinc-700">
-                            <span class="font-medium hidden md:block">@${currentUser.nickname}</span>
+                        <div onclick="editProfile()" class="flex items-center gap-x-2 cursor-pointer">
+                            <img src="${currentUser.avatar}" class="w-8 h-8 rounded-full object-cover border border-zinc-700">
+                            <span>@${currentUser.nickname}</span>
                         </div>
-                        <button onclick="logout()" class="text-xs px-3 py-1 text-zinc-500 hover:text-red-400">sair</button>
+                        <button onclick="logout()" class="text-xs text-zinc-500">sair</button>
                     </div>`;
             }
         }
 
-        function showLogin() {
-            const nick = prompt('Digite seu apelido no sntx fórum:');
+        function login() {
+            const nick = prompt('Escolha seu apelido:');
             if (!nick) return;
-            currentUser = {
-                nickname: nick,
-                avatar: `https://i.pravatar.cc/128?img=${Math.floor(Math.random()*70)}`
-            };
-            saveData();
+            currentUser = { nickname: nick, avatar: 'https://i.pravatar.cc/128?img=47' };
+            saveAll();
             renderUserArea();
-            playSound('click');
+            renderPosts();
         }
 
         function logout() {
             currentUser = null;
             localStorage.removeItem('sntxUser');
             renderUserArea();
+            renderPosts();
         }
 
-        // ==================== RENDER ====================
-        function renderPosts(filteredPosts = null) {
+        function editProfile() {
+            const newNick = prompt('Novo apelido:', currentUser.nickname);
+            if (newNick) currentUser.nickname = newNick;
+
+            // Upload de foto
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    currentUser.avatar = ev.target.result;
+                    saveAll();
+                    renderUserArea();
+                    renderPosts();
+                    alert('Foto de perfil atualizada!');
+                };
+                reader.readAsDataURL(file);
+            };
+            input.click();
+        }
+
+        function toggleAdmin() {
+            if (isAdmin) {
+                isAdmin = false;
+                alert('Modo Admin desativado');
+            } else {
+                const pass = prompt('Senha de admin:');
+                if (pass === 'sntxadmin') {  // Senha simples
+                    isAdmin = true;
+                    alert('Modo Admin ativado! Você pode banir e apagar posts.');
+                } else {
+                    alert('Senha incorreta');
+                }
+            }
+            renderPosts();
+        }
+
+        function renderPosts() {
             const container = document.getElementById('posts-container');
             container.innerHTML = '';
-            const toShow = filteredPosts || posts;
 
-            document.getElementById('posts-count').innerHTML = `${toShow.length} publicações`;
+            posts.forEach(post => {
+                if (bannedUsers.includes(post.author)) return; // Esconde posts de banidos
 
-            toShow.forEach(post => {
-                const card = document.createElement('div');
-                card.className = `post-card rounded-3xl p-6 cursor-pointer`;
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="category-badge">${post.category || 'Geral'}</span>
-                        <span class="text-xs text-zinc-500">${new Date(post.date).toLocaleDateString('pt-BR')}</span>
+                const canDelete = currentUser && (post.author === currentUser.nickname || isAdmin);
+
+                const div = document.createElement('div');
+                div.className = 'post-card bg-zinc-900 border border-zinc-800 rounded-3xl p-5';
+                div.innerHTML = `
+                    <div class="flex justify-between">
+                        <span class="text-xs px-3 py-1 bg-zinc-800 rounded-full">${post.category || 'Geral'}</span>
+                        ${canDelete ? `<button onclick="deletePost(${post.id}); event.stopImmediatePropagation();" class="text-red-400 text-xs">Apagar</button>` : ''}
                     </div>
-                    <h3 class="font-semibold text-xl leading-tight mb-3">${post.title}</h3>
-                    <div class="flex items-center justify-between">
+                    <h3 class="font-semibold text-xl mt-3 mb-2">${post.title}</h3>
+                    <p class="text-sm text-zinc-400 line-clamp-3">${post.content}</p>
+                    
+                    <div class="flex items-center justify-between mt-5 text-sm">
                         <div class="flex items-center gap-x-2">
-                            <img src="${post.avatar}" class="w-7 h-7 rounded-full">
-                            <span class="text-sm text-zinc-400">@${post.author}</span>
+                            <img src="${post.avatar}" class="w-6 h-6 rounded-full">
+                            <span class="text-zinc-400">@${post.author}</span>
                         </div>
-                        <div class="flex items-center gap-x-4 text-sm text-zinc-400">
-                            <span><i class="fa-solid fa-heart"></i> ${post.likes || 0}</span>
-                            <span><i class="fa-regular fa-comment"></i> ${(post.comments || []).length}</span>
+                        <div class="flex gap-x-4">
+                            <button onclick="likePost(${post.id}); event.stopImmediatePropagation();" class="flex items-center gap-x-1">
+                                <i class="fa-solid fa-heart text-red-400"></i> <span>${post.likes || 0}</span>
+                            </button>
+                            <button onclick="commentOnPost(${post.id}); event.stopImmediatePropagation();" class="flex items-center gap-x-1">
+                                <i class="fa-regular fa-comment"></i> <span>${(post.comments || []).length}</span>
+                            </button>
                         </div>
                     </div>
                 `;
-                card.onclick = () => showPostModal(post.id);
-                container.appendChild(card);
+                container.appendChild(div);
             });
         }
 
-        function filterPosts() {
-            const term = document.getElementById('search-input').value.toLowerCase();
-            const filtered = posts.filter(p => p.title.toLowerCase().includes(term));
-            renderPosts(filtered);
+        function createNewPost() {
+            if (!currentUser) { alert('Faça login primeiro'); return; }
+            if (bannedUsers.includes(currentUser.nickname)) { alert('Você está banido.'); return; }
+
+            const title = document.getElementById('new-title').value.trim();
+            const content = document.getElementById('new-content').value.trim();
+            if (!title) return alert('Título obrigatório');
+
+            posts.unshift({
+                id: Date.now(),
+                title,
+                content,
+                author: currentUser.nickname,
+                avatar: currentUser.avatar,
+                category: 'Geral',
+                likes: 0,
+                comments: [],
+                date: new Date().toISOString()
+            });
+
+            saveAll();
+            hideNewPostModal();
+            renderPosts();
         }
 
-        // ==================== PUBLISH (com animação e som) ====================
-        function showNewPostModal() {
-            if (!currentUser) {
-                alert('Faça login primeiro para publicar no sntx fórum');
-                showLogin();
-                return;
+        function deletePost(id) {
+            if (!confirm('Tem certeza que quer apagar este post?')) return;
+            posts = posts.filter(p => p.id !== id);
+            saveAll();
+            renderPosts();
+        }
+
+        function likePost(id) {
+            const post = posts.find(p => p.id === id);
+            if (post) {
+                post.likes = (post.likes || 0) + 1;
+                saveAll();
+                renderPosts();
             }
+        }
+
+        function commentOnPost(id) {
+            if (!currentUser) { alert('Faça login para comentar'); return; }
+            const text = prompt('Seu comentário:');
+            if (!text) return;
+
+            const post = posts.find(p => p.id === id);
+            if (post) {
+                post.comments = post.comments || [];
+                post.comments.push({ author: currentUser.nickname, text });
+                saveAll();
+                renderPosts();
+            }
+        }
+
+        function showNewPostModal() {
+            if (!currentUser) return alert('Faça login primeiro');
             document.getElementById('new-post-modal').classList.remove('hidden');
             document.getElementById('new-post-modal').classList.add('flex');
         }
 
         function hideNewPostModal() {
-            const modal = document.getElementById('new-post-modal');
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
+            document.getElementById('new-post-modal').classList.remove('flex');
+            document.getElementById('new-post-modal').classList.add('hidden');
         }
 
-        function createNewPost() {
-            const title = document.getElementById('new-title').value.trim();
-            const content = document.getElementById('new-content').value.trim();
-            const category = document.getElementById('new-category').value;
+        function closeIntro() {
+            document.getElementById('intro-modal').classList.add('hidden');
+            localStorage.setItem('sntxIntroSeen', 'true');
+        }
 
-            if (!title) {
-                alert('Por favor, coloque um título');
-                return;
+        function checkIntro() {
+            if (!localStorage.getItem('sntxIntroSeen')) {
+                document.getElementById('intro-modal').classList.remove('hidden');
             }
-
-            const newPost = {
-                id: Date.now(),
-                title,
-                content,
-                category,
-                author: currentUser.nickname,
-                avatar: currentUser.avatar,
-                date: new Date().toISOString(),
-                likes: 0,
-                comments: []
-            };
-
-            posts.unshift(newPost);
-            saveData();
-            hideNewPostModal();
-
-            // === ANIMAÇÃO + SOM ao publicar ===
-            playSound('publish');
-            showSuccessToast();
-            renderPosts();
-
-            // Limpar campos
-            document.getElementById('new-title').value = '';
-            document.getElementById('new-content').value = '';
-        }
-
-        function showSuccessToast() {
-            const toast = document.createElement('div');
-            toast.className = `fixed bottom-8 left-1/2 -translate-x-1/2 success-toast bg-zinc-800 border border-zinc-700 px-6 py-3 rounded-2xl flex items-center gap-x-3 shadow-xl z-[200]`;
-            toast.innerHTML = `
-                <i class="fa-solid fa-check-circle text-emerald-400 text-xl"></i>
-                <span class="font-medium">Publicação criada com sucesso no sntx fórum!</span>
-            `;
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.style.transition = 'all 0.3s ease';
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 300);
-            }, 2800);
-        }
-
-        function showPostModal(id) {
-            const post = posts.find(p => p.id === id);
-            if (!post) return;
-            alert(`Post: ${post.title}\n\n${post.content || 'Sem descrição'}\n\n(A versão completa com likes e comentários está aqui. Quer que eu melhore ainda mais?)`);
         }
 
         function initialize() {
-            loadData();
+            loadData = () => {}; // already loaded above
             renderUserArea();
             renderPosts();
+            checkIntro();
 
-            // Atalho de teclado
-            document.addEventListener('keydown', function(e) {
-                if (e.key === '/' && document.activeElement.tagName === 'BODY') {
-                    e.preventDefault();
-                    document.getElementById('search-input').focus();
-                }
-            });
-
-            console.log('%c[sntx fórum] Versão com som e animações aplicada!', 'color:#666');
+            // Demo post if empty
+            if (posts.length === 0) {
+                posts.push({
+                    id: 1, title: "Bem-vindo ao sntx fórum", content: "Aqui você pode compartilhar métodos úteis. Teste o modo admin com a senha 'sntxadmin'.",
+                    author: "sntx", avatar: "https://i.pravatar.cc/128?img=47", likes: 12, comments: []
+                });
+                saveAll();
+                renderPosts();
+            }
         }
 
         window.onload = initialize;
